@@ -105,8 +105,3 @@ The checked-in paper PDF is included for convenience. Before publishing this rep
 ## Data and artifacts
 
 Large `.pth` files and generated experiment logs are intentionally excluded from normal Git commits. For a public release, publish selected weights through a GitHub Release, Git LFS, or an archival repository such as Zenodo, and record the corresponding download URL and checksum here.
-
-## License
-
-Add the license required by your institution and the paper's copyright terms before making the repository public. Until a license is added, GitHub users should not assume permission to reuse the code.
->>>>>>> 1b8ba1b (Initial public release)
