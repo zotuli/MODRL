@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-# MODRL
 多目标深度强化学习用于并联机器人多目标优化
 =======
 # Multi-Objective Deep Reinforcement Learning for Parallel-Robot Dimensional Optimization
