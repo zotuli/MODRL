@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+
+# Virtual environments and local configuration
+.venv/
+venv/
+env/
+.env
+
+# Training outputs and model checkpoints
+runs/
+outputs/
+checkpoints/
+rl_for_moo/model/
+*.pth
+*.pt
+*.ckpt
+
+# Experiment tracking
+wandb/
+**/wandb/
+
+# Historical local research archives; the publication code is in rl_for_moo/
+/first/
+/algorithm/
+/ct/
+
+# IDE and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
