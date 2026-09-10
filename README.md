@@ -4,7 +4,7 @@
 =======
 # Multi-Objective Deep Reinforcement Learning for Parallel-Robot Dimensional Optimization
 
-This repository contains the implementation accompanying the paper **“Multi-Objective Deep Reinforcement Learning for Dimensional Optimization of Parallel Robots.”**（https://ieeexplore.ieee.org/document/11592423） The method formulates dimensional design as a sequential decision problem and uses a Gray-code state representation with an attention-enhanced LSTM actor to search for a Pareto set of feasible robot designs.
+This repository contains the implementation accompanying the paper **“Multi-Objective Deep Reinforcement Learning for Dimensional Optimization of Parallel Robots.”**( https://ieeexplore.ieee.org/document/11592423 ) The method formulates dimensional design as a sequential decision problem and uses a Gray-code state representation with an attention-enhanced LSTM actor to search for a Pareto set of feasible robot designs.
 
 The code in `rl_for_moo/` is the publication-oriented implementation. The other directories are historical experiments and local research archives; they are not required for reproducing the main experiment.
 
