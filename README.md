@@ -24,7 +24,18 @@ The original scripts are kept in `rl_for_moo/` for reference. Generated checkpoi
 
 ## Installation
 
-Python 3.10–3.12 is recommended. Create an isolated environment and install the dependencies:
+Python 3.11 or 3.12 with the official CPython distribution is recommended. On Windows, use Python from [python.org](https://www.python.org/downloads/) or the standard `py` launcher. Avoid MSYS2/MinGW Python: NumPy's MinGW-W64 build is experimental on Windows and can produce `getlimits.py` warnings or crashes.
+
+Check the interpreter before creating the environment:
+
+```bash
+py -0p
+python -c "import sys, platform; print(sys.executable); print(platform.python_implementation())"
+```
+
+The implementation should be `CPython`, not a MinGW/MSYS2 interpreter.
+
+Create an isolated environment and install the dependencies:
 
 ```bash
 python -m venv .venv
@@ -35,6 +46,17 @@ source .venv/bin/activate
 
 python -m pip install --upgrade pip
 pip install -r requirements.txt
+```
+
+On Windows, if NumPy reports `Numpy built with MINGW-W64`, rebuild the virtual environment with the standard Python 3.12 interpreter:
+
+```bat
+deactivate
+rmdir /s /q .venv
+py -3.12 -m venv .venv
+.venv\Scripts\activate
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements.txt
 ```
 
 PyTorch wheels are platform- and CUDA-specific. If the generic PyPI wheel is not appropriate for your machine, install the matching PyTorch build from the [official selector](https://pytorch.org/get-started/locally/) before installing the remaining requirements.
