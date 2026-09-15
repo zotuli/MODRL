@@ -277,7 +277,7 @@ def isPointInsideBoundary(points, convex_hull_indices, test_points, boundary_poi
 
 
 
-def Limit_L(a1, a2, b1, b2, d_min):
+def Limit_L_PABD(a1, a2, b1, b2, d_min):
     """
     Link interference detection (from MATLAB Limit_L.m)
     a1, a2: Endpoints of link 1 (3x1 each)
@@ -348,6 +348,44 @@ def Limit_L(a1, a2, b1, b2, d_min):
 def d_Point_Line(p1, p2, p3):
     return np.linalg.norm(np.cross((p1 - p3), (p2 - p3))) / np.linalg.norm(p2 - p3)
 
+def Limit_L(a1, a2, b1, b2, d_min):
+    """Original PRBD link-interference test used by the paper implementation."""
+    Bool_L = 0
+
+    a = np.array(a2) - np.array(a1)
+    b = np.array(b2) - np.array(b1)
+    n = np.cross(a, b)
+    d = np.linalg.norm(
+        np.dot(n, (np.array(b1) - np.array(a1))) / np.linalg.norm(n)
+    )
+
+    if d > d_min:
+        Bool_L = 0
+    else:
+        t = np.linalg.solve(np.array([a, -b, n]).T, b1 - a1)
+        if np.all((t[:2] >= 0) & (t[:2] <= 1)):
+            Bool_L = 1
+        elif np.all((t[:2] < 0) | (t[:2] > 1)):
+            d = min(
+                np.linalg.norm(b1 - a1),
+                np.linalg.norm(b2 - a2),
+                np.linalg.norm(b2 - a1),
+                np.linalg.norm(b1 - a2),
+            )
+            Bool_L = 1 if d <= d_min else 0
+        else:
+            if t[0] > 1:
+                d = d_Point_Line(a, b1, b2)
+            elif t[0] < 0:
+                d = d_Point_Line(a1, b1, b2)
+            elif t[1] > 1:
+                d = d_Point_Line(b2, a1, a2)
+            elif t[1] < 0:
+                d = d_Point_Line(b1, a1, a2)
+            Bool_L = 1 if d <= d_min else 0
+    return Bool_L
+
+
 def ws_facePoints_Ver4(a, c, l_len, e, switch_pm, init_height, dz, guide_len, dl_min, delta_rho, rot_vec):
     """
     Workspace boundary detection using spiral search method.
@@ -388,6 +426,13 @@ def ws_facePoints_Ver4(a, c, l_len, e, switch_pm, init_height, dz, guide_len, dl
                     if np.sum(q >= -1e-8) < 6 or np.sum(q <= guide_len) < 6:
                         bool_inside = 2
                         count_q += 1
+                        break
+
+                    # Preserve the framework-collision constraint from the original PRBD.
+                    limit_framework = isLineCrossPolygon(b0, a0, c, e)
+                    if np.sum(limit_framework) > 0:
+                        bool_inside = 2
+                        count_framework += 1
                         break
 
                     # Link interference condition (all 6 pairs)
@@ -689,12 +734,12 @@ def ws_facePoints_PABD(a, c, l_len, e, switch_pm, init_height, dz, guide_len, dl
                         count_q += 1
                         break
 
-                    if (Limit_L(b0[:, 0], a0[:, 0], b0[:, 1], a0[:, 1], dl_min) or
-                        Limit_L(b0[:, 1], a0[:, 1], b0[:, 2], a0[:, 2], dl_min) or
-                        Limit_L(b0[:, 2], a0[:, 2], b0[:, 3], a0[:, 3], dl_min) or
-                        Limit_L(b0[:, 3], a0[:, 3], b0[:, 4], a0[:, 4], dl_min) or
-                        Limit_L(b0[:, 4], a0[:, 4], b0[:, 5], a0[:, 5], dl_min) or
-                        Limit_L(b0[:, 5], a0[:, 5], b0[:, 0], a0[:, 0], dl_min)):
+                    if (Limit_L_PABD(b0[:, 0], a0[:, 0], b0[:, 1], a0[:, 1], dl_min) or
+                        Limit_L_PABD(b0[:, 1], a0[:, 1], b0[:, 2], a0[:, 2], dl_min) or
+                        Limit_L_PABD(b0[:, 2], a0[:, 2], b0[:, 3], a0[:, 3], dl_min) or
+                        Limit_L_PABD(b0[:, 3], a0[:, 3], b0[:, 4], a0[:, 4], dl_min) or
+                        Limit_L_PABD(b0[:, 4], a0[:, 4], b0[:, 5], a0[:, 5], dl_min) or
+                        Limit_L_PABD(b0[:, 5], a0[:, 5], b0[:, 0], a0[:, 0], dl_min)):
                         reachable = False
                         count_l += 1
                         break
@@ -766,12 +811,12 @@ def ws_facePoints_PABD(a, c, l_len, e, switch_pm, init_height, dz, guide_len, dl
                                 break
                             
                             # Link interference check (all 6 pairs)
-                            if (Limit_L(b0[:, 0], a0[:, 0], b0[:, 1], a0[:, 1], dl_min) or
-                                Limit_L(b0[:, 1], a0[:, 1], b0[:, 2], a0[:, 2], dl_min) or
-                                Limit_L(b0[:, 2], a0[:, 2], b0[:, 3], a0[:, 3], dl_min) or
-                                Limit_L(b0[:, 3], a0[:, 3], b0[:, 4], a0[:, 4], dl_min) or
-                                Limit_L(b0[:, 4], a0[:, 4], b0[:, 5], a0[:, 5], dl_min) or
-                                Limit_L(b0[:, 5], a0[:, 5], b0[:, 0], a0[:, 0], dl_min)):
+                            if (Limit_L_PABD(b0[:, 0], a0[:, 0], b0[:, 1], a0[:, 1], dl_min) or
+                                Limit_L_PABD(b0[:, 1], a0[:, 1], b0[:, 2], a0[:, 2], dl_min) or
+                                Limit_L_PABD(b0[:, 2], a0[:, 2], b0[:, 3], a0[:, 3], dl_min) or
+                                Limit_L_PABD(b0[:, 3], a0[:, 3], b0[:, 4], a0[:, 4], dl_min) or
+                                Limit_L_PABD(b0[:, 4], a0[:, 4], b0[:, 5], a0[:, 5], dl_min) or
+                                Limit_L_PABD(b0[:, 5], a0[:, 5], b0[:, 0], a0[:, 0], dl_min)):
                                 reachable = False
                                 count_l += 1
                                 break
@@ -1286,6 +1331,7 @@ def my_fitnessfcn(x, init_data):
     
     # 工作空间要考虑与框架的干涉情况
     # Select workspace calculation method based on ws_method
+    ws_method = ws_method.upper()
     if ws_method == 'PABD':
         edge_k_init = init_data['edge_k_init']
         ws_points, ws_limit = ws_facePoints_PABD(a, c, l_len, e, switch_pm, init_height, dz, guide_len, dl_min, edge_k_init, rot_vec)
@@ -1376,11 +1422,12 @@ def generInitData(refPoints, idx, ws_method='PRBD'):
 
 # 驾驶仿真数据初始化
 def generInitData_simu(refPoints, ws_method='PRBD'):
+    ws_method = ws_method.upper()
     init_data = {}
     init_data['refPoints'] = refPoints
     init_data['dl_min'] = 20  # 判断连杆是否干涉的最小距离
     init_data['delta_rho'] = 10  # 工作空间沿半径探索的步长
-    init_data['dz'] = 50  # 工作空间z轴方向的增长步长
+    init_data['dz'] = 20 if ws_method == 'PRBD' else 50  # Preserve original PRBD sampling.
     init_data['edge_k_init'] = 50  # 工作空间PABD法点阵间距
     init_data['guide_len'] = 1000  # 导轨长度
     init_data['switch_pm'] = np.array([-1, -1, -1, -1, -1, -1])  # 用来判断反解中是＋还是﹣，1*6，默认值为-1
@@ -1401,11 +1448,12 @@ def generInitData_simu(refPoints, ws_method='PRBD'):
 
 # 装配机器人数据初始化
 def generInitData_assembly(refPoints, ws_method='PRBD'):
+    ws_method = ws_method.upper()
     init_data = {}
     init_data['refPoints'] = refPoints
     init_data['dl_min'] = 8
     init_data['delta_rho'] = 8
-    init_data['dz'] = 20
+    init_data['dz'] = 8 if ws_method == 'PRBD' else 20
     init_data['edge_k_init'] = 20  # 工作空间PABD法点阵间距
     init_data['guide_len'] = 600  # 导轨长度
     init_data['switch_pm'] = np.array([-1, -1, -1, -1, -1, -1])  # 用来判断反解中是＋还是﹣，1*6，默认值为-1
@@ -1668,7 +1716,8 @@ def generGACon_medical():
     return A, b, Aeq, beq, lb, ub, initialPopulation
 
 if __name__ == '__main__':
-    idx = 2
+    # Preserve the original standalone validation case (medical robot, PRBD).
+    idx = 3
     state_size = 21
     Global_Seed = 42
 
@@ -1682,12 +1731,11 @@ if __name__ == '__main__':
     # PRBD: 极坐标扫描方法 (原 ws_facePoints_Ver4)
     # PABD: 极坐标自适应边界检测方法 (新增)
     # ============================================================
-    ws_method = 'PABD'  # Change to 'PABD' to use PABD method
+    ws_method = 'PRBD'  # Set to 'PABD' to validate the alternative method.
     
     init_Data = generInitData(refpoints, idx, ws_method=ws_method)
     
     print(f"Using workspace method: {ws_method}")
-    print(f"edge_k_init (for PABD): {init_Data['edge_k_init']}")
     print(f"delta_rho (for PRBD): {init_Data['delta_rho']}")
     print("-" * 50)
     
@@ -1702,16 +1750,8 @@ if __name__ == '__main__':
     # print(f'[Time] Total: {total_time:.3f}s')
     
      # 第一次运行（包含初始化开销）
-    print("Run 1 (with init overhead):")
+    print("Running the original single-call validation:")
     f1, f2, f3, f4, f5, f6, f7 = my_fitnessfcn(x, init_Data)
     
     # 后续运行（实际运行时间）
-    print("\nRun 2:")
-    start = time.time()
-    f1, f2, f3, f4, f5, f6, f7 = my_fitnessfcn(x, init_Data)
-    print(f"Time: {time.time() - start:.3f}s")
-    
-    print("\nRun 3:")
-    start = time.time()
-    f1, f2, f3, f4, f5, f6, f7 = my_fitnessfcn(x, init_Data)
-    print(f"Time: {time.time() - start:.3f}s")
+    print(f'f1:{f1},\nf2:{f2},\nf3:{f3},\nf4:{f4},\nf5:{f5},\nf6:{f6},\nf7:{f7}')

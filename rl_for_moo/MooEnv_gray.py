@@ -200,19 +200,14 @@ class MooSCH:
         self.obj_dim = 7  # 目标空间维度
         self.x_bin_num =  x_bin_num
         self.backend = backend or default_backend
-        global my_fitnessfcn
-        my_fitnessfcn = self.backend.my_fitnessfcn
         self.A, self.b, _, _, self.x_low, self.x_up, self.inital_state = self.backend.generGACon(idx)
         self.x_dim = len(self.x_low)  # 决策空间维度
         self.ws_method = ws_method.upper()
         if self.ws_method not in {'PRBD', 'PABD'}:
             raise ValueError("ws_method must be 'PRBD' or 'PABD'")
-        try:
-            self.init_Data = self.backend.generInitData(
-                parameters, idx, ws_method=self.ws_method
-            )
-        except TypeError:
-            self.init_Data = self.backend.generInitData(parameters, idx)
+        self.init_Data = self.backend.generInitData(
+            parameters, idx, ws_method=self.ws_method
+        )
 
     def obj(self, x):
         """
@@ -233,7 +228,7 @@ class MooSCH:
             violated = constraints > self.b  # 形状: (l_A,)
 
             if not np.any(violated):  # 如果没有违反约束
-                f[i] = my_fitnessfcn(x[i], self.init_Data)  # 计算目标函数值v
+                f[i] = self.backend.my_fitnessfcn(x[i], self.init_Data)
         return f
 
 # class MooSCH:
