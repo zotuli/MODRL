@@ -9,9 +9,8 @@ from torch import nn
 class AttentionLSTMActor(nn.Module):
     """LSTM actor used to produce Bernoulli action probabilities.
 
-    The forward pass intentionally follows the published implementation: the
-    last recurrent output is transformed to probabilities for every encoded
-    design bit.
+    Attention is applied over the sequence dimension so the actor can learn
+    which historical states are most relevant to the current action.
     """
 
     def __init__(
@@ -49,9 +48,12 @@ class AttentionLSTMActor(nn.Module):
         scores = torch.bmm(hidden, weight) / torch.sqrt(
             torch.tensor(self.hidden_size, dtype=hidden.dtype, device=hidden.device)
         )
-        attention_weights = torch.softmax(scores, dim=-1)
-        attended = lstm_output * attention_weights
-        return torch.sigmoid(self.output_projection(attended[:, -1, :]))
+        # ``scores`` has shape (batch, sequence_length, 1).  Normalizing over
+        # the last dimension would therefore always return one and disable
+        # the attention module.  Normalize over time instead.
+        attention_weights = torch.softmax(scores, dim=1)
+        context = torch.sum(lstm_output * attention_weights, dim=1)
+        return torch.sigmoid(self.output_projection(context))
 
 
 class MLP(nn.Module):
